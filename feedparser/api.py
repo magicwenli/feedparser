@@ -75,7 +75,7 @@ SUPPORTED_VERSIONS = {
 }
 
 
-def _open_resource(url_file_stream_or_string, etag, modified, agent, referrer, handlers, request_headers, result):
+def _open_resource(url_file_stream_or_string, etag, modified, agent, referrer, handlers, request_headers, result, proxy_host, proxy_type):
     """URL, filename, or string --> stream
 
     This function lets you define parsers that take any input source
@@ -136,7 +136,7 @@ def _open_resource(url_file_stream_or_string, etag, modified, agent, referrer, h
             in ('http', 'https', 'ftp', 'file', 'feed')
     )
     if looks_like_url:
-        data = http.get(url_file_stream_or_string, etag, modified, agent, referrer, handlers, request_headers, result)
+        data = http.get(url_file_stream_or_string, etag, modified, agent, referrer, handlers, request_headers, result, proxy_host, proxy_type)
         return io.BytesIO(data)
 
     # try to open with native open function (if url_file_stream_or_string is a filename)
@@ -182,6 +182,8 @@ def parse(
         resolve_relative_uris: bool = None,
         sanitize_html: bool = None,
         optimistic_encoding_detection: bool = None,
+        proxy_host: str = None,
+        proxy_type: str = None
 ) -> FeedParserDict:
     """Parse a feed from a URL, file, stream, or string.
 
@@ -230,6 +232,14 @@ def parse(
         (uses less memory, but the wrong encoding may be detected in rare cases).
         Defaults to the value of
         :data:`feedparser.OPTIMISTIC_ENCODING_DETECTION`, which is ``True``.
+    :param proxy_host:
+        Should feedparser use a proxy to requst RSS feed?
+        Set as "hostname:port" if needed.
+        Defaults to ``None``, which means do not use proxy.
+    :param proxy_type:
+        Should feedparser use a proxy to requst RSS feed?
+        Set as "http" or "https" if needed.
+        Defaults to ``None``, which means do not use proxy.
 
     """
 
@@ -246,7 +256,7 @@ def parse(
     )
 
     try:
-        file = _open_resource(url_file_stream_or_string, etag, modified, agent, referrer, handlers, request_headers, result)
+        file = _open_resource(url_file_stream_or_string, etag, modified, agent, referrer, handlers, request_headers, result, proxy_host, proxy_type)
     except urllib.error.URLError as error:
         result.update({
             'bozo': True,

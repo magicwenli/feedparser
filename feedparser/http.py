@@ -89,7 +89,7 @@ class URLHandler(urllib.request.HTTPDigestAuthHandler, urllib.request.HTTPRedire
         return retry
 
 
-def _build_urllib2_request(url, agent, accept_header, etag, modified, referrer, auth, request_headers):
+def _build_urllib2_request(url, agent, accept_header, etag, modified, referrer, auth, request_headers, proxy_host, proxy_type):
     request = urllib.request.Request(url)
     request.add_header('User-Agent', agent)
     if etag:
@@ -118,10 +118,12 @@ def _build_urllib2_request(url, agent, accept_header, etag, modified, referrer, 
     for header_name, header_value in request_headers.items():
         request.add_header(header_name, header_value)
     request.add_header('A-IM', 'feed')  # RFC 3229 support
+    if proxy_host and proxy_type:
+        request.set_proxy(proxy_host,proxy_type)
     return request
 
 
-def get(url, etag=None, modified=None, agent=None, referrer=None, handlers=None, request_headers=None, result=None):
+def get(url, etag=None, modified=None, agent=None, referrer=None, handlers=None, request_headers=None,proxy_host=None,proxy_type=None, result=None):
     if handlers is None:
         handlers = []
     elif not isinstance(handlers, list):
@@ -165,7 +167,7 @@ def get(url, etag=None, modified=None, agent=None, referrer=None, handlers=None,
     url = ''.join(bits)
 
     # try to open with urllib2 (to use optional headers)
-    request = _build_urllib2_request(url, agent, ACCEPT_HEADER, etag, modified, referrer, auth, request_headers)
+    request = _build_urllib2_request(url, agent, ACCEPT_HEADER, etag, modified, referrer, auth, request_headers, proxy_host, proxy_type)
     opener = urllib.request.build_opener(*tuple(handlers + [URLHandler()]))
     opener.addheaders = []  # RMK - must clear so we only send our custom User-Agent
     f = opener.open(request)
